@@ -50,9 +50,6 @@ Rotary r = Rotary(encoderPinA, encoderPinB);
 #define speakerButton 5
 #define microphoneButton 6
 
-//Playing parameters
-#define stepVolumeLength 3000 //time in ms
-
 //clipping indicator variables
 boolean clipping = 0;
 
