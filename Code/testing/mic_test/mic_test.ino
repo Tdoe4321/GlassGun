@@ -118,106 +118,6 @@ ISR(ADC_vect) {//when new ADC value ready
   timer++;//increment timer at rate of 38.5kHz
 }
 
-
-/*
-   COMPARATOR FUNCTION
-   Custom Comparitor function for sorting min -> max
-*/
-
-int minToMax(int &a, int &b) {
-  if (max(a, b) == a) {
-    return -1;
-  }
-  else return 1;
-}
-
-
-/*
-   FIND MODE FROM DATA
-   Returns the 'mode' of the freqData
-*/
-
-void getMode() {
-  boolean doAdd = true;
-
-  // The first button press should be short to get "bad values" or values that we know are bad
-  // This alternates between the recording of "bad data" and "good data"
-  if (badData) { 
-    if (printDebug) Serial.println("Bad Data: ");
-    for (int j = 0; j < freqData.size(); j++) {
-      for (int i = 0; i < NOT_DATA.size(); i++) {
-        if (freqData.get(j) == NOT_DATA.get(i)) {
-          doAdd = false;
-          break;
-        }
-      }
-      if (doAdd) {
-        NOT_DATA.add(freqData.get(j));
-      }
-      doAdd = true;
-    }
-
-    if (printDebug) {
-      Serial.println("-----");
-      for (int i = 0; i < NOT_DATA.size(); i++) {
-        Serial.println(NOT_DATA.get(i));
-      }
-      Serial.println("-------");
-    }
-  }
-
-  else {
-    if (printDebug) Serial.println("Not Bad Data: ");
-    for (int j = 0; j < freqData.size(); j++) {
-      for (int i = 0; i < NOT_DATA.size(); i++) {
-        if (freqData.get(j) == NOT_DATA.get(i)) {
-          if (printDebug) {
-            Serial.print("Removed: ");
-            Serial.println(freqData.get(j));
-          }
-          freqData.remove(j);
-          j--;
-          break;
-        }
-      }
-    }
-
-    freqData.sort(minToMax);
-
-    modeHold = freqData.get(0);
-    modeValue = modeHold;
-
-    for (int i = 0; i < freqData.size(); i++) {
-      if (freqData.get(i) == modeHold) {
-        ++modeCount;
-      }
-      else {
-        if (modeCount > modeSubCount) {
-          modeSubCount = modeCount;
-          modeValue = modeHold;
-        }
-        modeCount = 1;
-        modeHold = freqData.get(i);
-      }
-    }
-
-    modeCount = 1;
-    modeSubCount = 1;
-
-    if (printDebug) {
-      Serial.println("--------");
-      Serial.println(modeValue);
-      Serial.println("---------");
-    }
-
-    NOT_DATA.clear();
-  }
-  if (badData) badData = false;
-  else badData = true;
-  freqData.clear();
-}
-
-
 /*
    MAIN LOOP
 */
@@ -252,25 +152,12 @@ void loop() {
   }
 
   if (digitalRead(microphoneButton) == HIGH) { // The interrupt is running all the time, but we only store the values if the
-    gotData = true;                            // button is currently being held
     if (frequency > 300 && frequency < 1300) {
-      if (printDebug) {
-        Serial.print(frequency);
-        Serial.println(" hz");
-      }
-      if (freqData.size() <= 245) { // Won't let arduino stall
-        freqData.add(frequency);
-      }
+      Serial.print(frequency);
+      Serial.println(" hz");
     }
     freqModifier = 0;  // Reset the modifier if we record a new value
   }
-
-  if (!gotData && freqData.size() != 0) {  // Run our algorithm to get the Mode from the dataset
-    resetMicInterupt();
-    getMode();
-  }
-
-  gotData = false;
 
 }
 
